@@ -1,0 +1,30 @@
+version: 2.1
+
+orbs:
+  rememborb: circleci/rememborb@0.0.1
+
+jobs:
+  build-publish:
+    context: personal_website
+    machine: # executor type
+      image: ubuntu-1604:201903-01   
+    
+      steps:
+        - checkout
+        - run: dotnet build
+        - mem/remember:
+          env_var: VERSION_NUMBER
+          value: '$(cat ./ci_scripts/semver.sh | bash)'
+        - run: docker build -t disi33/personal_website:$VERSION_NUMBER .
+        - run: echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+        - run: docker push disi33/personal_website:$VERSION_NUMBER
+        - run: docker push disi33/personal_website:latest
+
+  update-helm-charts:
+    context: personal_website
+    machine: # executor type
+      image: ubuntu-1604:201903-01
+        - mem/recall:
+          env_var: VERSION_NUMBER   
+        - run: chmod +x ./ci_scripts/update_helm_chart.sh
+        - run: ./ci_scripts/update_helm_chart.sh $VERSION_NUMBER
