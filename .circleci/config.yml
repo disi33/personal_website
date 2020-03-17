@@ -39,6 +39,3 @@ workflows:
     jobs:
       - build-publish-update:
           context: personal_website
-          filters:
-            branches:
-              only: master
